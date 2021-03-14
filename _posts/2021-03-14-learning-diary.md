@@ -13,7 +13,7 @@ Nothing is true, everything is permitted. ―The Creed's maxim.
 用 vector<list<pair<int,int>>> 模拟HashMap，发生哈希冲撞直接添加入链表。和昨天题目类似。用 std::find_if 查找key值相同的pair。
 
 ## ISOC++ wiki
-今天单纯读[wiki](https://isocpp.org/wiki/faq/virtual-functions),把每个FAG总结一下。
+今天单纯读[wiki](https://isocpp.org/wiki/faq/virtual-functions),把每个FAQ总结一下。
 
 ### What is a “virtual member function”? 
 

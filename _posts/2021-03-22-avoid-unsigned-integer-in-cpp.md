@@ -48,7 +48,7 @@ float sum_elements(float a[], unsigned length) {
 # define INT32_MIN		(-2147483647-1)
 {% endhighlight %}
 
-工程上不用深入这些繁琐细节，C++ Style 表示类型范围可以用<limits>里的numeric_limits模板类，更便捷。
+工程上不用深入这些繁琐细节，C++ Style 表示类型范围可以用头文件limits里的numeric_limits模板类，更便捷。
 
 ## Conclusion
 - 无符号整数取模溢出，且常常潜藏类型转换

@@ -50,8 +50,6 @@ float sum_elements(float a[], unsigned length) {
 
 工程上不用深入这些繁琐细节，C++ Style 表示类型范围可以用<limits>里的numeric_limits模板类，更便捷。
 
-尽量用头纹见
-
 ## Conclusion
 - 无符号整数取模溢出，且常常潜藏类型转换
 - 绝不要在C/C++中用无符号类型去保证一个非负输入（变量/函数参数等），use assertion or exception

@@ -137,7 +137,7 @@ class Rational { ... };
 
 const Rational operator*(const Rational& lhs, const Rational& rhs);
 {% endhighlight %}
-我们经常看见类似代码。为什么需要返回一个常指针？因为如果没有const指定返回，我们可以得到类似代码，
+我们经常看见类似代码。为什么需要返回一个const对象？因为如果没有const指定返回，我们可以得到类似代码，
 {% highlight cpp %}
 Rational a, b, c;
 // ...
@@ -149,7 +149,7 @@ Rational a, b, c;
 if (a * b = c) // oops, meant to do a comparison!
 {% endhighlight %}
 
-为了避免上述错误，我们可以指定返回位常指针。
+为了避免上述错误，我们可以指定返回const对象。
 
 关于指定参数const，也尽可能使用之。
 
@@ -182,7 +182,7 @@ int main() {
 #### bitwise constness
 bitwise const 要求成员函数不修改对象中任何bit。这也是C++对于const member function的定义，即调用时不允许修改任何非静态数据成员。
 
-但通过bitwise test的成员函数并不总是安全的，比如下面这个类中的operator[]，满足const member function的条件，但返回对象内部数据的引用。仍然对象内部数据有机会被修改，比如这个main函数中的'cctb'对象，
+但通过bitwise test的成员函数并不总是安全的，比如下面这个类中的operator[]，满足const member function的条件，但返回对象内部数据的引用。对象内部数据仍然有机会被修改，比如这个main函数中的'cctb'对象，
 {% highlight cpp %}
 class CTextBlock {
 public:

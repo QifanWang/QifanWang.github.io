@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Effective C++ 3rd Chapter 7: Customizing new and delete"
+title:  "Effective C++ 3rd Chapter 8: Customizing new and delete"
 categories: c++
 tags: [reading, effective]
 toc: true

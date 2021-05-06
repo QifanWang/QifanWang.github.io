@@ -1,26 +1,16 @@
 ---
 layout: post
-title:  "2021 Mar 23rd Learning Diary"
-categories: journal
-tags: [reading]
+title:  "2021 CS:APP Data Lab"
+categories: Labs
+tags: [reading, classic labs]
 toc: true
 --- 
-Two's complement is the easiest to implement in hardware.
+When a man speaks or acts with good intention, then happiness follows him like his shadow that never leaves him. -Sakyamuni
 {: .message }
 
-## LeetCode
-[341. 扁平化嵌套列表迭代器](https://leetcode-cn.com/problems/flatten-nested-list-iterator/)
-可以先完全dfs提前遍历一遍保存结果，或者用栈记录已经遍历的迭代器pair(begin与end)，注意pair的复制问题，需要用引用。
-
-关于迭代器的使用不当导致内存泄漏，非法访问等UB问题，可以看这篇[博客]((https://medium.com/@lightcone/iterator-invalidation-in-modern-c-ca0f3c161c5f))。总的来说就是，问题根源
-> have container modification in an iterator loop, hence iterator invalidation.
-
-## CS:APP 3e
-阅读ch3，未完成。完成Data lab实验。
-
 ## Data Lab
-是熟悉C primitive type(主要是整数与浮点数) 底层表示，以及位运算与补码。
-即可
+熟悉C primitive type(主要是整数与浮点数) 底层表示，以及位运算与补码，即可完成此实验。
+
 实现代码[见此](https://github.com/QifanWang/learning-csapp/blob/master/handout/datalab-handout/bits.c)
 有些问题很难，这里简单记录一下。
 
@@ -155,8 +145,6 @@ int howManyBits(int x) {
 浮点数部分比较简单。只要熟悉IEEE 754标准即可。
 
 ## Reference
-1. [Iterator Invalidation in Modern C++](https://medium.com/@lightcone/iterator-invalidation-in-modern-c-ca0f3c161c5f)
-2. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
-3. [My data lab handout](https://github.com/QifanWang/learning-csapp/blob/master/handout/datalab-handout/bits.c)
-
+1. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
+2. [My data lab handout](https://github.com/QifanWang/learning-csapp/blob/master/handout/datalab-handout/bits.c)
 

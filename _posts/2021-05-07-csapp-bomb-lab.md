@@ -8,7 +8,7 @@ toc: true
 Love is like a mirror: once broken, that ends it.
 {: .message }
 
-使用 GDB 与 objdump 工具，解读汇编代码，推理出答案字符串，即可完成此实验。
+使用 GDB 与 objdump 工具，解读汇编代码，推理出答案字符串，即可完成此实验。[见此](https://github.com/QifanWang/learning-csapp/tree/master/handout/bomb)。
 
 总体上，分为六个阶段的汇编代码解读。
 
@@ -277,13 +277,178 @@ s | 7 | 0x47 G
 
 函数 phase_6 有些长，这里分段说明，
 
-TODO: 待续
+### read six numbers
+调用 read_six_numbers 从 input 字符串中读取六个数字，数字存储在以 %rsp 开始的数组中。
+{% highlight nasm %}
+  4010fc:	48 83 ec 50          	sub    $0x50,%rsp
+  401100:	49 89 e5             	mov    %rsp,%r13
+  401103:	48 89 e6             	mov    %rsp,%rsi	; array address at %rsp
+  401106:	e8 51 03 00 00       	callq  40145c <read_six_numbers>
+{% endhighlight %}
+
+
+### loop check
+
+代码添加注释如下，
+{% highlight nasm %}
+  40110b:	49 89 e6             	mov    %rsp,%r14	; %r14 stores stack pointer
+  40110e:	41 bc 00 00 00 00    	mov    $0x0,%r12d	; %r12d is iterator i in loop, init as 0
+  401114:	4c 89 ed             	mov    %r13,%rbp	; %r13 stores the i th element address, so does %rbp
+  401117:	41 8b 45 00          	mov    0x0(%r13),%eax	; get a number from 6 numbers
+  40111b:	83 e8 01             	sub    $0x1,%eax	
+  40111e:	83 f8 05             	cmp    $0x5,%eax	; the num must be below or equal to 6
+  401121:	76 05                	jbe    401128 <phase_6+0x34>
+  401123:	e8 12 03 00 00       	callq  40143a <explode_bomb>
+  401128:	41 83 c4 01          	add    $0x1,%r12d	; %r12d i iterator ++
+  40112c:	41 83 fc 06          	cmp    $0x6,%r12d	; loop condition: i in [0, 6)
+  401130:	74 21                	je     401153 <phase_6+0x5f>
+  401132:	44 89 e3             	mov    %r12d,%ebx	; %ebx is a new iterator j in inner loop, init as i + 1
+  401135:	48 63 c3             	movslq %ebx,%rax	; %ebx index a input number,
+  401138:	8b 04 84             	mov    (%rsp,%rax,4),%eax
+  40113b:	39 45 00             	cmp    %eax,0x0(%rbp)	; the j th number must not be equal to i th num
+  40113e:	75 05                	jne    401145 <phase_6+0x51>
+  401140:	e8 f5 02 00 00       	callq  40143a <explode_bomb>
+  401145:	83 c3 01             	add    $0x1,%ebx	; %ebx iterator j ++
+  401148:	83 fb 05             	cmp    $0x5,%ebx	; loop condition: j in [i+1, 5]
+  40114b:	7e e8                	jle    401135 <phase_6+0x41>
+  40114d:	49 83 c5 04          	add    $0x4,%r13
+  401151:	eb c1                	jmp    401114 <phase_6+0x20>
+  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi
+{% endhighlight %}
+用一个双重循环，检查 input numbers 是否符合条件，
+1. 每个数字小于等于6
+2. 每个数字互不相同
+
+### change every input number
+通过一个循环将 input number 的值改为 7 - num，由于 input number 在0~6范围内，改变后在1~7范围内，
+代码添加注释如下，
+{% highlight nasm %}
+  401153:	48 8d 74 24 18       	lea    0x18(%rsp),%rsi	; array end address 
+  401158:	4c 89 f0             	mov    %r14,%rax	; %rax get stack pointer address
+  40115b:	b9 07 00 00 00       	mov    $0x7,%ecx	; %ecx is 7
+  401160:	89 ca                	mov    %ecx,%edx	; %edx is 7
+  401162:	2b 10                	sub    (%rax),%edx	; %edx is 7 - num 
+  401164:	89 10                	mov    %edx,(%rax)	; input: num -> 7 - num
+  401166:	48 83 c0 04          	add    $0x4,%rax	; %rax offset to next input num
+  40116a:	48 39 f0             	cmp    %rsi,%rax	; loop condition: to end of array
+  40116d:	75 f1                	jne    401160 <phase_6+0x6c>
+{% endhighlight %}
+
+### initiate a linked list
+
+于 %rsp+0x20 处初始化了一个指针数组，每个指针按顺序对应 input number，且指针指向一个链表上元素，链表是有序的。
+
+即 input number 对应了一个指针，其所指位置在链表上的顺序，代表该 num 在 6 个数字中的顺序。相当于排序。
 
 {% highlight nasm %}
-
+  40116f:	be 00 00 00 00       	mov    $0x0,%esi	; si is loop iterator i, init as 0
+  401174:	eb 21                	jmp    401197 <phase_6+0xa3>
+  401176:	48 8b 52 08          	mov    0x8(%rdx),%rdx	; rdx is its next element, an address
+  40117a:	83 c0 01             	add    $0x1,%eax	
+  40117d:	39 c8                	cmp    %ecx,%eax	; eax increments to i th num
+  40117f:	75 f5                	jne    401176 <phase_6+0x82>
+  401181:	eb 05                	jmp    401188 <phase_6+0x94>
+  401183:	ba d0 32 60 00       	mov    $0x6032d0,%edx		; if num <= 1, stores 0x6032d0 as first address 
+  401188:	48 89 54 74 20       	mov    %rdx,0x20(%rsp,%rsi,2)	; store an address at a new array after input num
+  40118d:	48 83 c6 04          	add    $0x4,%rsi		; i++
+  401191:	48 83 fe 18          	cmp    $0x18,%rsi		; loop condition: to end
+  401195:	74 14                	je     4011ab <phase_6+0xb7>
+  401197:	8b 0c 34             	mov    (%rsp,%rsi,1),%ecx	; get i th number
+  40119a:	83 f9 01             	cmp    $0x1,%ecx		; if num[i] <= 1
+  40119d:	7e e4                	jle    401183 <phase_6+0x8f>
+  40119f:	b8 01 00 00 00       	mov    $0x1,%eax		; %eax gets 1
+  4011a4:	ba d0 32 60 00       	mov    $0x6032d0,%edx		; dx gets first address
+  4011a9:	eb cb                	jmp    401176 <phase_6+0x82>
+  4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx
 {% endhighlight %}
+
+于 0x6032d0 开始存储的六个地址为恰好为链表的六个节点，其排列本身就按照顺序，
+通过
+`
+x/24w 0x6032d0
+`
+命令可以得到，
+{% highlight nasm %}
+0x6032d0 <node1>:       0x0000014c      0x00000001      0x006032e0      0x00000000
+0x6032e0 <node2>:       0x000000a8      0x00000002      0x006032f0      0x00000000
+0x6032f0 <node3>:       0x0000039c      0x00000003      0x00603300      0x00000000
+0x603300 <node4>:       0x000002b3      0x00000004      0x00603310      0x00000000
+0x603310 <node5>:       0x000001dd      0x00000005      0x00603320      0x00000000
+0x603320 <node6>:       0x000001bb      0x00000006      0x00000000      0x00000000
+{% endhighlight %}
+倒数第二列即是链表节点的 next 字段，可以看出其排列本身就按照顺序，
+
+input number (改变后) 排第 i (1-based)位小，对应指针数组中的指针即指向 nodei 位置。
+
+### change the linked list
+
+通过一个循环，将链表重新按指针数组中元素顺序排序，即指针数组第i个元素的 next 为 i+1 元素(指针)，
+{% highlight nasm %}
+  4011ab:	48 8b 5c 24 20       	mov    0x20(%rsp),%rbx	; bx gets 1st pointer
+  4011b0:	48 8d 44 24 28       	lea    0x28(%rsp),%rax	; ax is loop iterator, init as 2nd address of pointer array
+  4011b5:	48 8d 74 24 50       	lea    0x50(%rsp),%rsi	; si gets end address of pointer array
+  4011ba:	48 89 d9             	mov    %rbx,%rcx	; cx gets 1st pointer
+  4011bd:	48 8b 10             	mov    (%rax),%rdx	; dx gets i th pointer
+  4011c0:	48 89 51 08          	mov    %rdx,0x8(%rcx)	; i-1 th pointer-to linked element's next is i th pointer
+  4011c4:	48 83 c0 08          	add    $0x8,%rax	; ax iterator ++
+  4011c8:	48 39 f0             	cmp    %rsi,%rax	; loop condition: to end of pointer array
+  4011cb:	74 05                	je     4011d2 <phase_6+0xde>
+  4011cd:	48 89 d1             	mov    %rdx,%rcx	; cx gets next pointer
+  4011d0:	eb eb                	jmp    4011bd <phase_6+0xc9>
+  4011d2:	48 c7 42 08 00 00 00 	movq   $0x0,0x8(%rdx)	; linked list tail element's next is NULL
+{% endhighlight %}
+
+通过命令，
+`
+x/12w $rsp+0x20
+`
+可以查看指针数组的内容。
+
+指针数组重新代表了链表。
+
+### check the linked list
+链表节点的 32 bit 值必须大于下一个节点的 32 bit 值。
+{% highlight nasm %}
+  4011da:	bd 05 00 00 00       	mov    $0x5,%ebp	; bp is loop iterator, init as 5
+  4011df:	48 8b 43 08          	mov    0x8(%rbx),%rax	; ax get linked list bx pointer element's next
+  4011e3:	8b 00                	mov    (%rax),%eax	; ax gets pointer-to 32 bit value
+  4011e5:	39 03                	cmp    %eax,(%rbx)	; bx pointer-to value must be greater or equal to ax(next element)
+  4011e7:	7d 05                	jge    4011ee <phase_6+0xfa>
+  4011e9:	e8 4c 02 00 00       	callq  40143a <explode_bomb>
+  4011ee:	48 8b 5b 08          	mov    0x8(%rbx),%rbx	; bx get next element
+  4011f2:	83 ed 01             	sub    $0x1,%ebp	; bp --
+  4011f5:	75 e8                	jne    4011df <phase_6+0xeb>
+{% endhighlight %}
+
+
+### inference
+
+由于必须满足链表重新排序后的大小关系，
+
+linked node 32-bit value | node name | input number after change(7 - x) | original input number
+--- | --- | --- | ---
+0x0000039c | 0x6032f0 node3 | 3 | 4
+0x000002b3 | 0x603300 node4 | 4 | 3
+0x000001dd | 0x603310 node5 | 5 | 2
+0x000001bb | 0x603320 node6 | 6 | 1
+0x0000014c | 0x6032d0 node1 | 1 | 6
+0x000000a8 | 0x6032e0 node2 | 2 | 5
+
+故可以推得答案。
+
+## Conclusions
+通过这个实验熟悉x86-64汇编代码，以及用gdb进行逆向工程分析代码。
+
+使用 objdump -d xxx 得到汇编代码，进行分析。
+
+实验时需要仔细看 instruction code 的意思，一个指令搞错意思后面推理可能会出现连锁的错误。阅读汇编代码比较好的方法是，分段(根据大致意思以及jump指令分code blocks)并添加注释。
+
+GDB 有些命令十分有用，尤其是一些打印内存数据的命令，这个[Cheat Sheet](http://csapp.cs.cmu.edu/3e/docs/gdbnotes-x86-64.pdf)与tui结合使用可以事半功倍。
 
 ## Reference
 1. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
-2. [Two-page x86-64 GDB cheat sheet](http://csapp.cs.cmu.edu/3e/docs/gdbnotes-x86-64.pdf)
-
+2. [My bomb lab](https://github.com/QifanWang/learning-csapp/tree/master/handout/bomb)
+3. [bomblab writeup](http://csapp.cs.cmu.edu/3e/bomblab.pdf)
+4. [CS:APP Student Site](http://csapp.cs.cmu.edu/3e/students.html)
+3. [Two-page x86-64 GDB cheat sheet](http://csapp.cs.cmu.edu/3e/docs/gdbnotes-x86-64.pdf)
+4. [Beej's Quick Guide to GDB](http://beej.us/guide/bggdb/)

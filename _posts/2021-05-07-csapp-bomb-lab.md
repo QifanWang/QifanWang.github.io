@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "2021 CS:APP Bomb Lab"
+title:  "CS:APP Bomb Lab"
 categories: Labs
 tags: [reverse engineering, disassembling]
 toc: true

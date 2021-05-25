@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "CS:APP Attack Bomb"
+title:  "CS:APP Architecture Lab (Y86)"
 categories: Labs
 tags: [architecture, assembling]
 toc: true

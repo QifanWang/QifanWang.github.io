@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "CS:APP Attack Bomb"
+title:  "CS:APP Attack Lab"
 categories: Labs
 tags: [reverse engineering, disassembling, code injection]
 toc: true

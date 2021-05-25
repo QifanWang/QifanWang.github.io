@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "2021 CS:APP Data Lab"
+title:  "CS:APP Data Lab"
 categories: Labs
 tags: [reading, classic labs]
 toc: true

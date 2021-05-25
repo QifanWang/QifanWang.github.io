@@ -172,19 +172,26 @@ PC <-- valP           # 更新 PC
 
 
 ## Part C
+工作目录在 sim/pipe 中。
 
-未完待续。
+需要给流水线添加 iaddq 指令，同 Part B 一样但要注意额外的控制信号设置。
 
-//todo
-{% highlight nasm %}
+同时修改 ncopy.ys 使得平均 CPE(Cycle Per coping Element) 尽可能小。
 
-{% endhighlight %}
+关于构建与测试命令，
+1. 使用 `make VERSION=full` 构建系统。
+2. 使用 `psim -t sdriver.yo` 与 `psim -t ldriver.yo` 运行和测试流水线。
+3. 使用 `correctness.pl` 测试 ncopy.ns 代码功能是否正确。
+4. 使用 `benchmark.pl` 测试并计算平均CPE与得分。
+
+这一部分比较自由，可以通过循环展开来优化 CPE ，拿到满分比较困难。
 
 ## Conclusions
+这一章节的实验为计算机组成原理部分的知识。实验文档与相关工具较多，需要细心阅读。
 
 
 ## Reference
 1. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
 2. [arch lab readme](http://csapp.cs.cmu.edu/3e/README-archlab32)
 3. [arch lab writeup](http://csapp.cs.cmu.edu/3e/archlab32.pdf)
-
+4. [My Solution](https://github.com/QifanWang/learning-csapp/tree/master/handout/archlab-handout)

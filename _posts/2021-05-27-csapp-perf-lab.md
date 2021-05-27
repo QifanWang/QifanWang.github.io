@@ -8,8 +8,10 @@ toc: true
 Make the most of today. Seize the day!
 {: .message }
 
-关于优化的实验，主要是修改 kernel.c 中两个有关图像处理的函数，降低 CPE(Cycle Per Element) 以提高效率。
+关于优化的实验，主要是修改 kernels.c 中两个有关图像处理的函数，降低 CPE(Cycle Per Element) 以提高效率。
+
 `make driver` 编译。
+
 `driver` 测试。
 
 ## rotate
@@ -46,7 +48,7 @@ void rotate(int dim, pixel *src, pixel *dst)
 }
 {% endhighlight %}
 
-经过实验比较 4*4，8*8，16*16，32*32 与 64*64 分块的运行效率，选择 8 是更好的解。较之原解法有近乎两倍的提升。
+经过实验比较 4 * 4，8 * 8，16 * 16，32 * 32 与 64 * 64 分块的运行效率，选择 8 是更好的解。较之原解法有近乎两倍的提升。
 ```
 Rotate: 11.8 (naive_rotate: Naive baseline implementation)
 Rotate: 20.6 (rotate: Current working version, 8 * 8 block)

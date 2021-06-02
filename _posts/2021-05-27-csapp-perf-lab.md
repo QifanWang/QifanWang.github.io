@@ -8,7 +8,7 @@ toc: true
 Make the most of today. Seize the day!
 {: .message }
 
-关于优化的实验，主要是修改 kernels.c 中两个有关图像处理的函数，降低 CPE(Cycle Per Element) 以提高效率。
+阅读 csapp 3e 第五章，完成关于优化的实验。实验内容主要是修改 kernels.c 中两个有关图像处理的函数，降低 CPE(Cycle Per Element) 以提高效率。
 
 `make driver` 编译。
 
@@ -63,11 +63,37 @@ Rotate: 20.6 (rotate: Current working version, 8 * 8 block)
 循环展开代码过长，就不放代码。
 
 ## smooth
+该函数实现将一个正方形图像像素点“模糊化”的操作，具体来说就是一个像素点的新值为其紧邻的像素点(最多八个)与其旧值的平均值。
 
-待续
+优化重点在于减少函数调用与分支预测(判断周围紧邻的像素点有几个)。
 
+可以先计算特殊四个角与四边的像素点新值，再用循环处理常见的像素点(周围有八个像素点)。
+
+代码过长，可见[4](https://github.com/QifanWang/learning-csapp/tree/master/handout/perflab-handout)。
+
+## Conclusions
+最终结果，rotate 拥有近乎两倍的性能提升，而 smooth 拥有超过四倍的性能提升。
+```
+Summary of Your Best Scores:
+  Rotate: 20.4 (rotate: Current working version, 8 * 8 block)
+  Smooth: 68.6 (smooth: Current working version, loop unrolling.)
+```
+
+本章学习的优化不同于数据结构与算法设计上的优化，主要内容在于：
+
+基本编码原则
+- 消除连续的函数调用。尽可能将计算移出循环外。
+- 消除不必要的内存引用。引入临时变量保存中间结果。
+
+低级优化
+- 展开循环。
+- 通过多个累积变量与重结合等手段，提高指令级并行。
+- 重写条件操作，使得编译器采用条件数据传送。
+
+优化是一个需要谨慎对待的问题，不要过早优化，也不要在优化时引入错误。
 
 ## Reference
 1. [CS:APP Lab Assignments](http://csapp.cs.cmu.edu/3e/labs.html)
 2. [perf lab readme](http://csapp.cs.cmu.edu/3e/README-perflab)
 3. [perf lab writeup](http://csapp.cs.cmu.edu/3e/perflab.pdf)
+4. [My Solution](https://github.com/QifanWang/learning-csapp/tree/master/handout/perflab-handout)

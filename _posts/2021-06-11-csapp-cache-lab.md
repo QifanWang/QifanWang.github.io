@@ -1,8 +1,8 @@
 ---
 layout: post
-title:  "CS:APP Performance Lab"
+title:  "CS:APP Cache Lab"
 categories: Labs
-tags: [optimization]
+tags: [optimization, memory]
 toc: true
 --- 
 So every defect of the mind may have a special reciept.

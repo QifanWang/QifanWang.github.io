@@ -68,7 +68,11 @@ using namespace std;
 //     ^
 // 1 error generated.
 ```
-根据以上的报错信息可以看出， 命名空间 std 里 `toupper` 的重载会导致模板实例化出错。
+根据以上的报错信息可以看出， 命名空间 std 里 `toupper` 的重载会导致模板实例化出错。更为准确的[说法](https://en.cppreference.com/w/cpp/language/function_template)是，
+
+> Template argument deduction takes place after the function template name lookup (which may involve argument-dependent lookup) and before overload resolution.
+
+在 name lookup 后找到两个 candidates , 然后模板参数推导时发生错误。
 
 ```cpp
   auto h = function<int(int)>(toupper);

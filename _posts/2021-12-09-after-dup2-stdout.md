@@ -119,7 +119,7 @@ if(cpid == 0) {
 
 ## Conclusion
 
-CSAPP 中强调过 buffered IO 与 unbuffered IO 的不同，字符型 IO 与 binary IO 的不同，在混合使用时(最好别混合)都需要小心仔细，查看文档。额外需要注意缓冲区数据结构的问题，缓冲区由谁维护(kernel? 文件流?)，缓冲策略？切换文件描述符后，文件流究竟改变了什么？
+CSAPP 中强调过 buffered IO 与 unbuffered IO 的不同，字符型 IO 与 binary IO 的不同，在混合使用时(最好别混合)都需要小心仔细，查看文档。额外需要注意缓冲区数据结构的问题，缓冲区由谁维护(kernel? 文件流?)，缓冲策略？切换文件描述符后，文件流究竟改变了什么？进程的文件流与文件描述符(Stream 与 file descriptor)均属于进程的"文件描述"，在 fork 的 exec 之后二者变化是不同的，descriptor 被保留而 stream became inaccessible (因为 file descriptor 才是最本质的描述，stream 在其上套了一层)。 [POSIX Standard IO Stream](https://pubs.opengroup.org/onlinepubs/009695399/functions/xsh_chap02_05.html#tag_02_05_01), [POSIX exec](https://pubs.opengroup.org/onlinepubs/009695399/functions/exec.html)
 
 ## Reference
 1. [gdb forks](https://sourceware.org/gdb/onlinedocs/gdb/Forks.html)

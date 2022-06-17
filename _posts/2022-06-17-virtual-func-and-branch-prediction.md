@@ -22,6 +22,7 @@ C++的虚函数机制大部分实现都是通过类中插入虚指针，为虚�
 原文章语焉不详，但在 Stack Overflow 上找到[相关的问答](https://stackoverflow.com/questions/7241922/how-has-cpu-architecture-evolution-affected-virtual-function-call-performance)。该问题提到的间接分支(indirect branch)是一种特殊的跳转指令，其跳转的目的地址值在寄存器中。[wiki](https://en.wikipedia.org/wiki/Indirect_branch)还提到这类型指令可以用于构建多路分支，比如一个jump table里每行存储地址值，将条件计算结果存入寄存器以确定跳转地址。一些子程序调用指令也是间接的，函数指针也是一种间接调用的机制。
 
 以下为一些指令集的间接分支示例，
+
 ISA | instruction
 ---|---
 MSP430 | br r15

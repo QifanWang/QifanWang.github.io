@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "CS:APP Malloc Lab"
+title:  "CS:APP Proxy Lab"
 categories: Labs
 tags: [system programming, memory]
 toc: true

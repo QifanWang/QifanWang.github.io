@@ -519,7 +519,7 @@ int f()  // Using return-codes
 
 ## Conclusion
 
-这篇笔记仅记录 [C++ 异常与错误处理的 FAQ](https://isocpp.org/wiki/faq/exceptions)的第一部分，其他部分见之后笔记。基本总计总结如下。
+这篇笔记仅记录 [C++ 异常与错误处理的 FAQ](https://isocpp.org/wiki/faq/exceptions)的第一部分，其他部分见之后笔记。基本总结如下。
 
 异常的设计目的：
 - 报告构造函数的错误(最主要的)
